@@ -1,0 +1,14 @@
+{
+  "name": "zeppos-hardcover",
+  "version": "0.6.7",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "assets": "node scripts/generate-assets.js",
+    "build": "npm run assets && node scripts/build.js",
+    "zeus": "node scripts/zeus.cjs",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": { "@zeppos/zml": "0.0.43" },
+  "devDependencies": { "@zeppos/zeus-cli": "1.9.3" }
+}

@@ -1,0 +1,32 @@
+{
+  "configVersion": "v3",
+  "app": {
+    "appId": 20001,
+    "appName": "Hardcover",
+    "appType": "app",
+    "version": { "code": 13, "name": "0.6.7" },
+    "icon": "icon.png",
+    "vender": "Community",
+    "description": "Unofficial Hardcover reading companion"
+  },
+  "permissions": ["device:os.ble", "data:os.device.info", "device:os.local_storage"],
+  "runtime": {
+    "apiVersion": { "compatible": "3.0", "target": "3.0", "minVersion": "3.0" }
+  },
+  "targets": {
+    "bip6": {
+      "module": {
+        "page": { "pages": ["page/index"] },
+        "app-side": { "path": "app-side/index" },
+        "setting": { "path": "app-settings/index" }
+      },
+      "platforms": [
+        { "name": "Amazfit Bip 6", "deviceSource": 9765121 },
+        { "name": "Amazfit Bip 6", "deviceSource": 10158337 }
+      ],
+      "designWidth": 390
+    }
+  },
+  "i18n": { "en-US": { "appName": "Hardcover" } },
+  "defaultLanguage": "en-US"
+}
