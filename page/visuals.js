@@ -59,9 +59,9 @@ export const visuals = {
     if (!this.state.alive) return
     this.clearWidgets()
     this.state.renderOffset = 0
-    setScrollLock(true)
     setScrollMode({ mode: SCROLL_MODE_FREE })
     scrollTo({ y: 0 })
+    setScrollLock({ lock: true })
     this.widget(ui.widget.FILL_RECT, { ...layout.rect(0, 0, 390, 450), color: BACKGROUND })
     if (this.state.busy) { this.renderLoadingOverlay(); return }
     if (this.state.message && (this.state.retryKind || ['edit', 'status'].includes(this.state.screen))) {
@@ -78,6 +78,8 @@ export const visuals = {
   renderHome() {
     const selected = this.state.selected
     if (!this.state.books.length) { this.renderReadingCard(); return }
+    // Unlocking resets Zepp's scroll mode to FREE. Unlock before selecting SWIPER.
+    setScrollLock({ lock: false })
     setScrollMode({ mode: SCROLL_MODE_SWIPER, options: {
       height, count: this.state.books.length,
       modeParams: { on_page: index => {
@@ -102,7 +104,6 @@ export const visuals = {
     this.state.restoringSwiper = true
     swipeToIndex({ index: selected, animation: SCROLL_ANIMATION_NONE })
     this.state.restoringSwiper = false
-    setScrollLock(false)
   },
   renderReadingCard(book = this.book(), index = this.state.selected) {
     this.heading(SECTIONS[0].title)

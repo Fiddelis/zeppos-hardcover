@@ -37,7 +37,14 @@ function fixture({ opaqueWidgets = false } = {}) {
     statSync: ({ path }) => files.has(path) ? { size: 100 } : undefined,
     rmSync: ({ path }) => files.delete(path), onGesture: ({ callback }) => { gestureCallback = callback }, offGesture: () => { offGestureCalls++ },
     setPageBrightTime: options => { context.brightTime = options.brightTime },
-     setScrollMode: options => { context.scrollMode = options; context.swiperOptions = options; context.scrollModes.push(options) }, setScrollLock: locked => { context.scrollLocked = locked },
+     setScrollMode: options => { context.scrollMode = options; context.swiperOptions = options; context.scrollModes.push(options) },
+     setScrollLock: options => {
+       // Zepp accepts { lock }, not a boolean. Invalid options cannot lock a page.
+       if (!options || typeof options !== 'object') return
+       context.scrollLocked = options.lock ?? true
+       // Documented side effect: unlocking switches the page back to FREE.
+       if (!context.scrollLocked) context.scrollMode = { mode: 'free' }
+     },
      scrollTo: options => { context.scrollPosition = options }, swipeToIndex: options => { context.swipedTo = options },
     SCROLL_MODE_FREE: 'free', SCROLL_MODE_SWIPER: 'swiper', SCROLL_ANIMATION_NONE: 'none',
     GESTURE_LEFT: 1, GESTURE_RIGHT: 2, GESTURE_UP: 3, GESTURE_DOWN: 4,
@@ -55,7 +62,17 @@ function fixture({ opaqueWidgets = false } = {}) {
   return { page, repaints: () => repaint, timers, statusBarCalls, brightTime: () => context.brightTime,
     gesture: event => gestureCallback?.(event), offGestureCalls: () => offGestureCalls,
     scrollMode: () => context.scrollMode, scrollLocked: () => context.scrollLocked, swipedTo: () => context.swipedTo,
-    swiperOptions: () => context.swiperOptions, scrollModes: () => context.scrollModes }
+    swiperOptions: () => context.swiperOptions, scrollModes: () => context.scrollModes,
+    dragWheel(fromY, toY) {
+      if (!context.scrollLocked) {
+        context.scrollPosition = { y: fromY - toY }
+        return
+      }
+      page.state.wheelSurface.listeners.down({ y: fromY })
+      page.state.wheelSurface.listeners.move({ y: toY })
+      page.state.wheelSurface.listeners.up({ y: toY })
+    },
+    scrollPosition: () => context.scrollPosition }
 }
 
 function clickLabel(page, label) {
@@ -349,6 +366,34 @@ test('wheel controller steps absolute progress and Cancel does not write', async
   clickLabel(page, 'Cancel')
   assert.equal(calls, 0)
   assert.equal(page.state.screen, 'library')
+})
+
+test('picker drag changes the current page without scrolling the editor after leaving the library', () => {
+  const { page, dragWheel, scrollLocked, scrollPosition, scrollMode } = fixture()
+  page.render()
+  page.edit()
+  dragWheel(260, 232)
+  assert.equal(page.state.input, '31', 'native page scrolling must not steal the picker drag')
+  assert.equal(scrollLocked(), true)
+  assert.equal(scrollPosition().y, 0)
+  clickLabel(page, 'Cancel')
+  assert.equal(page.state.input, '31')
+  assert.equal(scrollLocked(), false)
+  assert.equal(scrollMode().mode, 'swiper', 'unlocking must not reset the home swiper to FREE')
+})
+
+test('percentage picker keeps the page locked across rerenders and supports dragging both ways', () => {
+  const { page, dragWheel, scrollLocked, scrollPosition } = fixture()
+  page.render()
+  page.edit()
+  page.setMode('percentage')
+  page.render()
+  dragWheel(260, 232)
+  assert.equal(page.state.input, '10.1')
+  dragWheel(232, 260)
+  assert.equal(page.state.input, '10')
+  assert.equal(scrollLocked(), true)
+  assert.equal(scrollPosition().y, 0)
 })
 
 test('visual wheel uses its own drag region and leaves footer Update outside its hit box', () => {

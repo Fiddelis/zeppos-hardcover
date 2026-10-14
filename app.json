@@ -4,7 +4,7 @@
     "appId": 20001,
     "appName": "Hardcover",
     "appType": "app",
-    "version": { "code": 13, "name": "0.6.7" },
+    "version": { "code": 16, "name": "0.6.10" },
     "icon": "icon.png",
     "vender": "Community",
     "description": "Unofficial Hardcover reading companion"
